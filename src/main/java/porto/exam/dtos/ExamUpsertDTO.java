@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import porto.exam.dtos.detail.ExamUpsertDeleteDTO;
 import porto.exam.dtos.detail.ExamUpsertQuestionDTO;
 import porto.exam.enums.ExamType;
 
@@ -23,6 +24,7 @@ public class ExamUpsertDTO {
     private ZonedDateTime endDate;
     private Integer passingGrade;
     private List<ExamUpsertQuestionDTO> questions;
+    private List <ExamUpsertDeleteDTO> formDelete;
     @JsonProperty("isNew")
     private boolean isNew;
 

@@ -13,6 +13,7 @@ import porto.exam.dtos.detail.ExamUpsertQuestionDTO;
 import porto.exam.entities.Answer;
 import porto.exam.entities.Exam;
 import porto.exam.entities.Question;
+import porto.exam.enums.DeleteType;
 import porto.exam.exceptions.BadLogicException;
 import porto.exam.repositories.*;
 import porto.exam.services.ExamService;
@@ -61,7 +62,7 @@ public class IExamService implements ExamService {
         var examEntity = dto.isNew() ? new Exam() : examRepository.findById(dto.getExamId()).orElseThrow();
         examEntity.setType(dto.getType());
         //validation to make sure change isn't made if exam is ongoing/finished
-        if (ZonedDateTime.now().isAfter(examEntity.getStartDate())) throw new BadLogicException(400, "Exam has started, unable to make changes");
+        if (ZonedDateTime.now().isAfter(dto.getStartDate())) throw new BadLogicException(400, "Exam has started, unable to make changes");
         examEntity.setStartDate(dto.getStartDate());
         examEntity.setEndDate(dto.getEndDate());
         examEntity.setPassingGrade(dto.getPassingGrade());
@@ -85,6 +86,13 @@ public class IExamService implements ExamService {
                 answerEntity.setQuestion(questionEntity);
                 answerRepository.save(answerEntity);
             }
+        }
+        for (var entityToDelete : dto.getFormDelete()) {
+            if (entityToDelete.getType() == DeleteType.QUESTION) {
+                questionRepository.deleteById(entityToDelete.getId());
+                answerRepository.findByQuestionId(entityToDelete.getId()).forEach(answer -> answerRepository.deleteById(answer.getId()));
+            }
+            if (entityToDelete.getType() == DeleteType.ANSWER) answerRepository.deleteById(entityToDelete.getId());
         }
     }
 
