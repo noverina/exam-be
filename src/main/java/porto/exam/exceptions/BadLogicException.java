@@ -4,11 +4,8 @@ import lombok.Getter;
 
 @Getter
 public class BadLogicException extends RuntimeException {
-    private final int errorCode;
-
-    public BadLogicException(int errorCode, String message) {
+    public BadLogicException(String message) {
         super(message);
-        this.errorCode = errorCode;
     }
 
 }

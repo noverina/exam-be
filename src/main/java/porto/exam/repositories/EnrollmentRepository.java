@@ -8,6 +8,7 @@ import porto.exam.dtos.CourseListDTO;
 import porto.exam.entities.Enrollment;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface EnrollmentRepository extends JpaRepository<Enrollment, Integer> {
@@ -21,5 +22,5 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Integer>
             JOIN e.courseTeacher ct
             WHERE e.student.id = :studentId
             """)
-    public List<CourseListDTO> getByStudent(@Param("studentId") Integer studentId);
+    public Optional<List<CourseListDTO>> getByStudent(@Param("studentId") Integer studentId);
 }

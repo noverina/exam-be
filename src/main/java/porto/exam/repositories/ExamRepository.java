@@ -8,6 +8,7 @@ import porto.exam.dtos.detail.CourseListExamDTO;
 import porto.exam.entities.Exam;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ExamRepository extends JpaRepository<Exam, Integer> {
@@ -25,6 +26,6 @@ public interface ExamRepository extends JpaRepository<Exam, Integer> {
         LEFT JOIN StudentExam se ON e = se.exam AND se.student.id = :studentId
         WHERE e.courseTeacher.id = :courseTeacherId
         """)
-    public List<CourseListExamDTO> getByCourseTeacherAndStudent(@Param("courseTeacherId") Integer courseTeacherId, @Param("studentId") Integer studentId);
+    public Optional<List<CourseListExamDTO>> getByCourseTeacherAndStudent(@Param("courseTeacherId") Integer courseTeacherId, @Param("studentId") Integer studentId);
 
 }

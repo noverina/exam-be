@@ -20,9 +20,9 @@ public class ICourseService implements CourseService {
     @Override
     public List<CourseListDTO> getByStudent(Integer studentId, String timezone) {
         ZoneId zone = ZoneId.of(timezone);
-        var courses = enrollmentRepository.getByStudent(studentId);
+        var courses = enrollmentRepository.getByStudent(studentId).orElseThrow();
         for (var course : courses) {
-            var exams = examRepository.getByCourseTeacherAndStudent(course.getCourseTeacherId(), studentId);
+            var exams = examRepository.getByCourseTeacherAndStudent(course.getCourseTeacherId(), studentId).orElseThrow();
             for (var exam : exams) {
                 exam.setStartDate(exam.getStartDate().withZoneSameInstant(zone));
                 exam.setEndDate(exam.getStartDate().withZoneSameInstant(zone));
