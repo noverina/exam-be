@@ -1,17 +1,17 @@
 package porto.exam.services.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import porto.exam.dtos.ExamDataDTO;
-import porto.exam.dtos.ExamSubmitDTO;
-import porto.exam.dtos.ExamUpsertDTO;
-import porto.exam.dtos.detail.ExamDataAnswerDTO;
-import porto.exam.dtos.detail.ExamDataQuestionDTO;
-import porto.exam.dtos.detail.ExamUpsertAnswerDTO;
-import porto.exam.dtos.detail.ExamUpsertQuestionDTO;
+import porto.exam.dtos.*;
+import porto.exam.dtos.detail.*;
+import porto.exam.dtos.flat.FlatExamQnADto;
+import porto.exam.dtos.flat.FlatGradeDto;
+import porto.exam.dtos.flat.FlatUpsertPrefillDto;
 import porto.exam.entities.*;
 import porto.exam.enums.DeleteType;
 import porto.exam.exceptions.BadLogicException;
@@ -21,9 +21,13 @@ import porto.exam.services.ExamService;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.stream.Collectors;
 
 @Service
 public class IExamService implements ExamService {
+    // region repo definition
     @Autowired
     private QuestionRepository questionRepository;
     @Autowired
@@ -31,139 +35,171 @@ public class IExamService implements ExamService {
     @Autowired
     private ExamRepository examRepository;
     @Autowired
+    private CourseTeacherRepository courseTeacherRepository;
+    @Autowired
     private StudentAnswerRepository studentAnswerRepository;
     @Autowired
     private StudentExamRepository studentExamRepository;
     @Autowired
-    private CourseTeacherRepository courseTeacherRepository;
+    private CourseRepository courseRepository;
     @Autowired
     private UserRepository userRepository;
     @PersistenceContext
     private EntityManager entityManager;
+    @Autowired
+    private ObjectMapper mapper;
+    // endregion
 
     @Override
     @Transactional
-    public void upsert(ExamUpsertDTO dto) {
-        var examEntity = dto.isNew() ? new Exam() : examRepository.findById(dto.getExamId()).orElseThrow();
-        examEntity.setType(dto.getType());
-
+    public void upsert(UpsertDto dto) {
         if (ZonedDateTime.now(ZoneId.of("UTC")).isAfter(dto.getStartDate())) throw new BadLogicException("Exam has started, unable to make changes");
 
-        examEntity.setStartDate(dto.getStartDate());
-        examEntity.setEndDate(dto.getEndDate());
-        examEntity.setPassingGrade(dto.getPassingGrade());
-        examEntity.setCourseTeacher(courseTeacherRepository.getReferenceById(dto.getCourseTeacherId()));
+        var examEntity = dto.isNew() ? new Exam(null, dto.getType(), dto.getPassingGrade(), dto.getStartDate(), dto.getEndDate(), false, courseTeacherRepository.getReferenceById(dto.getCourseTeacherId())) : examRepository.findById(dto.getExamId()).orElseThrow(EntityNotFoundException::new);
         examRepository.save(examEntity);
 
         for (var question : dto.getQuestions()) {
-            var questionEntity = question.isNew() ? new Question() : questionRepository.findById(question.getQuestionId()).orElseThrow();
-            questionEntity.setText(question.getText());
-            questionEntity.setExam(examEntity);
+            var questionEntity = question.isNew() ? new Question(null, question.getText(), examEntity) : questionRepository.findById(question.getQuestionId()).orElseThrow(EntityNotFoundException::new);
             questionRepository.save(questionEntity);
 
             var multipleCorrectAnswer = question.getAnswers().stream()
-                    .filter(ExamUpsertAnswerDTO::isCorrect)
+                    .filter(UpsertAnswerDto::isCorrect)
                     .limit(2)
                     .count() > 1;
             if (multipleCorrectAnswer) throw new BadLogicException("Multiple correct answers in question: " + question.getText());
 
             for (var answer : question.getAnswers()) {
-                var answerEntity = answer.isNew() ? new Answer() : answerRepository.findById(answer.getAnswerId()).orElseThrow();
-                answerEntity.setText(answer.getText());
-                answerEntity.setIsCorrect(answer.isCorrect());
-                answerEntity.setQuestion(questionEntity);
+                var answerEntity = answer.isNew() ? new Answer(null, answer.getText(), answer.isCorrect(), questionEntity) : answerRepository.findById(answer.getAnswerId()).orElseThrow();
                 answerRepository.save(answerEntity);
             }
         }
 
+        // delete entity queued for deletion
         for (var entityToDelete : dto.getFormDelete()) {
+            // cascade delete answer
             if (entityToDelete.getType() == DeleteType.QUESTION) {
-                questionRepository.deleteById(entityToDelete.getId());
-                answerRepository.findByQuestionId(entityToDelete.getId()).ifPresent(
-                        answers -> answerRepository.deleteAllById(
-                                answers.stream()
-                                .map(Answer::getId)
-                                .toList()));
+                questionRepository.deleteById(entityToDelete.getEntityId());
+                var answers = answerRepository.findByQuestionQuestionId(entityToDelete.getEntityId());
+                answerRepository.deleteAllById(answers.stream().map(Answer::getAnswerId).toList());
             }
-            if (entityToDelete.getType() == DeleteType.ANSWER) answerRepository.deleteById(entityToDelete.getId());
+            if (entityToDelete.getType() == DeleteType.ANSWER) answerRepository.deleteById(entityToDelete.getEntityId());
         }
     }
 
     @Override
-    public ExamUpsertDTO getUpsertExamData(Integer examId) {
-        var exam = examRepository.findById(examId).orElseThrow();
-        var dto = new ExamUpsertDTO(exam.getId(), exam.getCourseTeacher().getId(), exam.getType(), exam.getStartDate(), exam.getEndDate(), exam.getPassingGrade(), false);
-        var dtoQuestions = new ArrayList<ExamUpsertQuestionDTO>();
-        for (var question : questionRepository.findByExamId(examId).orElseThrow()) {
-            var dtoQuestion = new ExamUpsertQuestionDTO(question.getId(), question.getText(), false);
-            var dtoAnswers = new ArrayList<ExamUpsertAnswerDTO>();
-            for (var answer : answerRepository.findByQuestionId(question.getId()).orElseThrow()) {
-                var dtoAnswer = new ExamUpsertAnswerDTO(answer.getId(), answer.getText(), answer.getIsCorrect(), false);
-                dtoAnswers.add(dtoAnswer);
+    public UpsertPrefillDto fetchExamUpsertPrefillData(String examId, String timezone) {
+        var zone = ZoneId.of(timezone);
+        var output = new UpsertPrefillDto();
+        var groupedExams = examRepository.fetchUpsertPrefill(examId)
+                .stream().collect(Collectors.groupingBy(FlatUpsertPrefillDto::getExamId, LinkedHashMap::new, Collectors.toList()));
+        for (var groupedExam : groupedExams.entrySet()) {
+            var type = groupedExam.getValue().getFirst().getType();
+            var startDate = groupedExam.getValue().getFirst().getStartDate().withZoneSameInstant(zone);
+            var endDate = groupedExam.getValue().getFirst().getEndDate().withZoneSameInstant(zone);
+            var passingGrade = groupedExam.getValue().getFirst().getPassingGrade();
+
+            var groupedQuestions = groupedExam.getValue().stream().collect(Collectors.groupingBy(FlatUpsertPrefillDto::getQuestionId, LinkedHashMap::new, Collectors.toList()));
+            var questions = new ArrayList<UpsertPrefillQuestionDto>();
+            for (var groupedQuestion : groupedQuestions.entrySet()) {
+                var questionId = groupedQuestion.getValue().getFirst().getQuestionId();
+                var text = groupedQuestion.getValue().getFirst().getQuestionText();
+
+                var answers = groupedQuestion.getValue().stream().map(answer -> new UpsertPrefillAnswerDto(answer.getAnswerId(), answer.getAnswerText(), answer.isCorrect())).toList();
+
+                questions.add(new UpsertPrefillQuestionDto(questionId, text, answers));
             }
-            dtoQuestion.setAnswers(dtoAnswers);
-            dtoQuestions.add(dtoQuestion);
+            output = new UpsertPrefillDto(type, startDate, endDate, passingGrade, questions);
         }
-        dto.setQuestions(dtoQuestions);
-        return dto;
+        return output;
     }
 
     @Override
     @Transactional
-    public void submit(ExamSubmitDTO dto) {
-        var entity = studentExamRepository.findOneByStudentIdAndExamId(dto.getStudentId(), dto.getExamId()).orElse(new StudentExam());
+    public void submit(SubmitDto dto) {
+        var entity = studentExamRepository.findByStudentAndExam(dto.getStudentId(), dto.getExamId()).orElse(new StudentExam());
+        if (entity.getSubmitDate() != null || entity.getGrade() != null) throw new BadLogicException("Finalized; can't make changes");
         if (dto.isFinal()) entity.setSubmitDate(ZonedDateTime.now(ZoneId.of("UTC")));
-        if (entity.getStudent() == null) entity.setStudent(userRepository.getReferenceById(dto.getStudentId()));
-        if (entity.getExam() == null) entity.setExam(examRepository.getReferenceById(dto.getExamId()));
+        entity.setStudent(userRepository.findById(dto.getStudentId()).orElseThrow());
+        entity.setExam(examRepository.findById(dto.getExamId()).orElseThrow());
         studentExamRepository.save(entity);
 
-        for (var selectedAnswer : dto.getFormSubmitSelected()) {
-            var studentAnswerEntity = studentAnswerRepository.findOneByQuestionIdAndStudentExamId(selectedAnswer.getQuestionId(), entity.getId()).orElse(new StudentAnswer());
-            studentAnswerEntity.setAnswer(answerRepository.getReferenceById(selectedAnswer.getSelectedAnswerId()));
-            studentAnswerEntity.setQuestion(questionRepository.getReferenceById(selectedAnswer.getQuestionId()));
-            studentAnswerEntity.setStudentExam(studentExamRepository.getReferenceById(entity.getId()));
-            studentAnswerRepository.save(studentAnswerEntity);
+        for (var choice : dto.getChoices()) {
+            if (choice.getAnswerId() != null) {
+                var studentAnswerEntity = studentAnswerRepository.findByQuestionAndStudentAndExam(choice.getQuestionId(), dto.getStudentId(), dto.getExamId()).orElse(new StudentAnswer());
+                studentAnswerEntity.setAnswer(answerRepository.findById(choice.getAnswerId()).orElseThrow());
+                studentAnswerEntity.setQuestion(questionRepository.findById(choice.getQuestionId()).orElseThrow());
+                studentAnswerEntity.setStudent(userRepository.findById(dto.getStudentId()).orElseThrow());
+                studentAnswerRepository.save(studentAnswerEntity);
+            }
         }
     }
 
     @Override
-    public ExamDataDTO getExamData(Integer examId, Integer studentId) {
-        var dto = studentExamRepository.getByExamAndStudent(examId, studentId).orElseThrow();
-        var questions = questionRepository.findByExamId(examId);
-        var questionsDTO = new ArrayList<ExamDataQuestionDTO>();
+    public ExamListDto fetchExamWithQnA(String examId, String studentId, String timezone) {
+        var zone = ZoneId.of(timezone);
+        var output = new ExamListDto();
+        var groupedQuestions = examRepository.fetchExamWithQnA(examId, studentId).stream().collect(Collectors.groupingBy(FlatExamQnADto::getExamId, LinkedHashMap::new, Collectors.toList()));
+        for (var groupedExam : groupedQuestions.entrySet()) {
+            var examType = groupedExam.getValue().getFirst().getExamType();
+            var courseName = groupedExam.getValue().getFirst().getCourseName();
+            var endDate = groupedExam.getValue().getFirst().getEndDate().withZoneSameInstant(zone);
+            var canShowCorrect = groupedExam.getValue().getFirst().getEndDate().isBefore(ZonedDateTime.now());
+            var grade = groupedExam.getValue().getFirst().getGrade();
+            var isFinal = groupedExam.getValue().getFirst().getSubmitDate() != null || groupedExam.getValue().getFirst().getGrade() != null;
 
-        if (questions.isPresent()) {
-            for (var question: questions.get()) {
-                var questionDTO = new ExamDataQuestionDTO(question.getId(), question.getText());
-                studentAnswerRepository.findOneByQuestionIdAndStudentExamId(question.getId(), dto.getStudentExamId()).ifPresent(answer -> questionDTO.setSelectedAnswerId(answer.getAnswer().getId()));
-                var answers = answerRepository.findByQuestionId(question.getId());
-                var answersDTO = new ArrayList<ExamDataAnswerDTO>();
 
-                if (answers.isPresent()) {
-                    for (var answer : answers.get()) {
-                        var answerDTO = ZonedDateTime.now(ZoneId.of("UTC")).isAfter(dto.getEndDate()) ? new ExamDataAnswerDTO(answer.getId(), answer.getText(), answer.getIsCorrect()) : new ExamDataAnswerDTO(answer.getId(), answer.getText());
-                        answersDTO.add(answerDTO);
-                    }
+            var groupedAnswers = groupedExam.getValue().stream().collect(Collectors.groupingBy(FlatExamQnADto::getQuestionId, LinkedHashMap::new, Collectors.toList()));
+            var questions = new ArrayList<QuestionDto>();
+            for (var groupedQuestion : groupedAnswers.entrySet()) {
+                var questionId = groupedQuestion.getValue().getFirst().getQuestionId();
+                var text = groupedQuestion.getValue().getFirst().getQuestionText();
+                var selected = answerRepository.findIdByStudentAndQuestion(studentId, groupedQuestion.getValue().getFirst().getQuestionId());
 
-                    questionDTO.setAnswers(answersDTO);
-                }
+                var answers = groupedQuestion.getValue().stream().map(answer -> new AnswerDto(answer.getAnswerId(), answer.getAnswerText(), canShowCorrect ? answer.getIsCorrect() : null)).toList();
 
-                questionsDTO.add(questionDTO);
+                questions.add(new QuestionDto(questionId, selected, text, answers));
             }
+
+            output = new ExamListDto(isFinal, examId, examType, courseName, endDate, grade, questions);
         }
-        dto.setQuestions(questionsDTO);
-        return dto;
+        return output;
     }
 
-//    @Override
-//    public List<Integer> grade(Integer courseTeacherId, Integer examId) {
-//        var studentAnswers = studentAnswerRepository.getByCourseTeacherAndExam(courseTeacherId, examId);
-//        var grade = 0;
-//        for (var studentAnswer : studentAnswers) {
-//            if (studentAnswer.getAnswer().getIsCorrect()) {
-//                grade++;
-//            }
-//        }
-//        return List.of();
-//    }
+    @Override
+    @Transactional
+    public void grade(String examId) {
+        if (examRepository.findById(examId).orElseThrow().getEndDate().isAfter(ZonedDateTime.now())) throw new BadLogicException("Exam has not ended");
+
+        var studentExams = studentExamRepository.findByExam(examId).orElseThrow(() -> new BadLogicException("No data to grade"));
+        for (var studentExam : studentExams) {
+            var answers = studentAnswerRepository.findByStudentAndExam(studentExam.getStudent().getUserId(), examId);
+            var correctAnswers = answerRepository.findExamCorrectAnswers(examId);
+            var correct = 0;
+
+            for (var answer : answers.orElse(Collections.emptyList())) {
+                if (correctAnswers.contains(answer.getAnswer())) correct++;
+            }
+
+            var grade = (int) Math.ceil(((float) correct / correctAnswers.size()) * 100);
+            studentExam.setGrade(grade);
+            studentExamRepository.save(studentExam);
+        }
+    }
+
+    @Override
+    public GradeDto fetchGradeData(String courseTeacherId, String examId) {
+        var output = new GradeDto();
+        var groupedStudents = examRepository.fetchGrade(examId, courseTeacherId).stream().collect(Collectors.groupingBy(FlatGradeDto::getExamId, LinkedHashMap::new, Collectors.toList()));
+        for (var groupedStudent : groupedStudents.entrySet()) {
+            var id = groupedStudent.getValue().getFirst().getExamId();
+            var examType = groupedStudent.getValue().getFirst().getExamType();
+            var courseName = groupedStudent.getValue().getFirst().getCourseName();
+            var passingGrade = groupedStudent.getValue().getFirst().getPassingGrade();
+
+            var students = groupedStudent.getValue().stream().map(student -> new GradeStudentDto(student.getStudentId(), student.getStudentName(), student.getGrade())).toList();
+
+            output = new GradeDto(id, examType, courseName, passingGrade, students);
+        }
+        return output;
+    }
 }

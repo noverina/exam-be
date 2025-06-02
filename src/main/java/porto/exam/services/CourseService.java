@@ -1,10 +1,10 @@
 package porto.exam.services;
 
-import porto.exam.dtos.CourseListDTO;
+import porto.exam.dtos.CourseListDto;
 
 import java.util.List;
 
 
 public interface CourseService {
-    List<CourseListDTO> getByStudent (Integer studentId, String timezone);
+    List<CourseListDto> fetchByStudent(String studentId, String timezone);
 }
