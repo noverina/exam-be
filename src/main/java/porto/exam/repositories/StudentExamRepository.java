@@ -3,25 +3,25 @@ package porto.exam.repositories;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import porto.exam.dtos.ExamDataDTO;
 import porto.exam.entities.StudentExam;
 
+import java.util.List;
 import java.util.Optional;
 
-public interface StudentExamRepository extends JpaRepository<StudentExam, Integer> {
-    public Optional<StudentExam> findOneByStudentIdAndExamId(Integer studentId, Integer examId);
-
-    @Query(value = """
-        SELECT new porto.exam.dtos.ExamDataDTO(
-           se.id,
-           e.id,
-           e.type,
-           e.courseTeacher.course.name,
-           e.endDate
-        )
-        FROM Exam e
-        LEFT JOIN StudentExam se ON e = se.exam AND se.student.id = :studentId
-        WHERE e.id = :examId
+public interface StudentExamRepository extends JpaRepository<StudentExam, StudentExam.StudentExamId> {
+    @Query("""
+        SELECT se
+        FROM StudentExam se
+        WHERE se.student.userId = :studentId AND se.exam.examId = :examId
         """)
-    public Optional<ExamDataDTO> getByExamAndStudent(@Param("examId") Integer examId, @Param("studentId") Integer studentId);
+    public Optional<StudentExam> findByStudentAndExam(@Param("studentId") String studentId, @Param("examId") String examId);
+
+    @Query("""
+        SELECT se
+        FROM StudentExam se
+        JOIN FETCH se.student
+        WHERE se.exam.examId = :examId
+        """)
+    public Optional<List<StudentExam>> findByExam(@Param("examId") String examId);
+
 }

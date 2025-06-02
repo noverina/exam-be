@@ -7,7 +7,7 @@ import lombok.Setter;
 
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
-public class HttpResponseDTO<T> {
+public class HttpResponseDto<T> {
     private Boolean isError;
     private String message;
     private T data;

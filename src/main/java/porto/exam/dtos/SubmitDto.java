@@ -5,17 +5,17 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import porto.exam.dtos.detail.ExamSubmitSelectedDTO;
+import porto.exam.dtos.detail.ExamSubmitQnADto;
 
 import java.util.List;
 
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
-public class ExamSubmitDTO {
-    private Integer examId;
-    private Integer studentId;
+public class SubmitDto {
+    private String examId;
+    private String studentId;
     @JsonProperty("isFinal")
     private boolean isFinal;
-    private List<ExamSubmitSelectedDTO> formSubmitSelected;
+    private List<ExamSubmitQnADto> choices;
 }
 
