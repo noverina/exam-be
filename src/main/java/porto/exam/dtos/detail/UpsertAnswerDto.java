@@ -10,8 +10,8 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ExamUpsertAnswerDTO {
-    private Integer answerId;
+public class UpsertAnswerDto {
+    private String answerId;
     private String text;
     @JsonProperty("isCorrect")
     private boolean isCorrect;

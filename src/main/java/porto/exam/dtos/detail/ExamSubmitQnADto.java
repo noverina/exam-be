@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ExamSubmitSelectedDTO {
-    private int questionId;
-    private int selectedAnswerId;
+public class ExamSubmitQnADto {
+    private String questionId;
+    private String answerId;
 }

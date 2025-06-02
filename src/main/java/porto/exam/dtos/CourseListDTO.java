@@ -4,24 +4,15 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import porto.exam.dtos.detail.CourseListExamDTO;
+import porto.exam.dtos.detail.CourseListDetailDto;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
-public class CourseListDTO {
-    private Integer courseTeacherId;
-    private String name;
+public class CourseListDto {
+    private String courseTeacherId;
+    private String courseName;
     private String teacherName;
-    private List<CourseListExamDTO> exams;
-
-    public CourseListDTO(Integer courseTeacherId, String name, String teacherName) {
-        this.courseTeacherId = courseTeacherId;
-        this.name = name;
-        this.teacherName = teacherName;
-        this.exams = new ArrayList<>();
-    }
-
+    private List<CourseListDetailDto> exams;
 }

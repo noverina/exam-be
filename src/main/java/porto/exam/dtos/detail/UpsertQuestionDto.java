@@ -12,14 +12,14 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ExamUpsertQuestionDTO {
-    private Integer questionId;
+public class UpsertQuestionDto {
+    private String questionId;
     private String text;
-    private List<ExamUpsertAnswerDTO> answers;
+    private List<UpsertAnswerDto> answers;
     @JsonProperty("isNew")
     private boolean isNew;
 
-    public ExamUpsertQuestionDTO(Integer questionId, String text, boolean isNew) {
+    public UpsertQuestionDto(String questionId, String text, boolean isNew) {
         this.questionId = questionId;
         this.text = text;
         this.isNew = isNew;

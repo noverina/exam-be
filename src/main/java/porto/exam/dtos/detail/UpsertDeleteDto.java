@@ -10,7 +10,7 @@ import porto.exam.enums.DeleteType;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ExamUpsertDeleteDTO {
-    private Integer id;
+public class UpsertDeleteDto {
+    private String entityId;
     private DeleteType type;
 }
