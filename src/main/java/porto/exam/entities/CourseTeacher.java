@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import porto.exam.annotations.UuidV6;
 
 @Getter
 @Setter
@@ -16,7 +17,8 @@ import lombok.Setter;
 @Entity
 public class CourseTeacher {
     @Id
-    private Integer id;
+    @UuidV6
+    private String courseTeacherId;
 
     @ManyToOne
     @JoinColumn(name = "course_id")

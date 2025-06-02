@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import porto.exam.annotations.UuidV6;
 
 @Getter
 @Setter
@@ -13,12 +14,8 @@ import lombok.Setter;
 @Entity
 public class StudentAnswer {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
-
-    @ManyToOne
-    @JoinColumn(name = "student_exam_id")
-    private StudentExam studentExam;
+    @UuidV6
+    private String studentAnswerId;
 
     @ManyToOne
     @JoinColumn(name = "question_id")
@@ -27,4 +24,9 @@ public class StudentAnswer {
     @ManyToOne
     @JoinColumn(name = "answer_id")
     private Answer answer;
+
+    @ManyToOne
+    @JoinColumn(name = "student_id")
+    private User student;
+
 }

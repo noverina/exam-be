@@ -1,11 +1,15 @@
 package porto.exam.entities;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import porto.exam.annotations.UuidV6;
 
 
 @Getter
@@ -15,8 +19,8 @@ import lombok.Setter;
 @Entity
 public class Answer {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @UuidV6
+    private String answerId;
     private String text;
     @JsonProperty("is_correct")
     private Boolean isCorrect;

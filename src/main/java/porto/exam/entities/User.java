@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import porto.exam.annotations.UuidV6;
 import porto.exam.enums.Role;
 
 @Getter @Setter
@@ -13,8 +14,8 @@ import porto.exam.enums.Role;
 @Entity
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @UuidV6
+    private String userId;
     private String name;
     private String email;
     private String password;
