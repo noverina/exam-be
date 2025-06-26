@@ -23,10 +23,11 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
-public class IExamService implements ExamService {
+public class ExamServiceImpl implements ExamService {
     // region repo definition
     @Autowired
     private QuestionRepository questionRepository;
@@ -196,9 +197,38 @@ public class IExamService implements ExamService {
             var courseName = groupedStudent.getValue().getFirst().getCourseName();
             var passingGrade = groupedStudent.getValue().getFirst().getPassingGrade();
 
-            var students = groupedStudent.getValue().stream().map(student -> new GradeStudentDto(student.getStudentId(), student.getStudentName(), student.getGrade())).toList();
 
-            output = new GradeDto(id, examType, courseName, passingGrade, students);
+            var passAmt = new AtomicInteger();
+            var total = new AtomicInteger();
+            var studentWithGrade = new AtomicInteger();
+            var students = groupedStudent.getValue().stream()
+                    .map(student -> {
+                        Integer grade = student.getGrade();
+                        if (grade != null) {
+                            total.getAndAdd(student.getGrade());
+                            studentWithGrade.getAndIncrement();
+                        }
+
+                        boolean passed = (grade != null && grade >= passingGrade);
+
+                        if (passed) passAmt.getAndIncrement();
+
+                        return new GradeStudentDto(
+                                student.getStudentId(),
+                                student.getStudentName(),
+                                grade,
+                                passed
+                        );
+                    })
+                    .toList();
+            var passRate =  (!students.isEmpty())
+                    ? (Integer) passAmt.get() / students.size()
+                    : 0;
+            var avg =  (!students.isEmpty())
+                    ? (Integer) total.get() / studentWithGrade.get()
+                    : 0;
+
+            output = new GradeDto(id, examType, courseName, passingGrade, passRate, passAmt.get(), avg, students);
         }
         return output;
     }

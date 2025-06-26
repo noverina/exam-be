@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class ICourseService implements CourseService {
+public class CourseServiceImpl implements CourseService {
     @Autowired
     private CourseRepository courseRepository;
 

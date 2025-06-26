@@ -13,4 +13,5 @@ public class GradeStudentDto {
     private String studentId;
     private String studentName;
     private Integer grade;
+    private boolean isPass;
 }

@@ -18,5 +18,8 @@ public class GradeDto {
     private ExamType examType;
     private String courseName;
     private Integer passingGrade;
+    private Integer passRate;
+    private Integer passAmt;
+    private Integer average;
     private List<GradeStudentDto> students;
 }
