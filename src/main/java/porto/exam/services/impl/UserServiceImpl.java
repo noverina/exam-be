@@ -2,7 +2,10 @@ package porto.exam.services.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -11,6 +14,7 @@ import porto.exam.dtos.AuthDto;
 import porto.exam.dtos.RegisterDto;
 import porto.exam.entities.User;
 import porto.exam.enums.Role;
+import porto.exam.exceptions.UnauthorizedException;
 import porto.exam.repositories.UserRepository;
 import porto.exam.services.JwtService;
 import porto.exam.services.UserService;
@@ -37,9 +41,17 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public String auth(AuthDto dto) {
-        var auth = authManager.authenticate(
-                new UsernamePasswordAuthenticationToken(dto.getEmail(), dto.getPassword())
-        );
+        Authentication auth = null;
+        try {
+            auth = authManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(dto.getEmail(), dto.getPassword())
+            );
+        } catch (BadCredentialsException ex) {
+            throw new UnauthorizedException("Invalid credential");
+        }
+
+        if (auth == null) throw new RuntimeException("Unable to authenticate into Spring Security");
+        SecurityContextHolder.getContext().setAuthentication(auth);
         return jwtService.generateToken((UserDetails) auth.getPrincipal());
     }
 }

@@ -4,12 +4,13 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-import porto.exam.entities.User;
+import porto.exam.repositories.UserRepository;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
@@ -20,6 +21,8 @@ public class JwtService {
     private String secretKey;
     @Value("${jwt.expiration}")
     private long expiration;
+    @Autowired
+    private UserRepository repo;
 
     private SecretKey key() {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
@@ -28,11 +31,8 @@ public class JwtService {
 
     public String generateToken(UserDetails user) {
         var auth = SecurityContextHolder.getContext().getAuthentication();
-        var principal = auth.getPrincipal();
-        String id = "";
-        if (principal instanceof User details) id = details.getUserId();
-        else throw new RuntimeException("Unable to get userId from authentication context");
-
+        var principal = (UserDetails) auth.getPrincipal();
+        var id = repo.findByEmail(principal.getUsername()).orElseThrow().getUserId();
 
         return Jwts.builder()
                 .subject(user.getUsername())
