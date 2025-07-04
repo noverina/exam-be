@@ -2,7 +2,6 @@ package porto.exam.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -42,7 +41,7 @@ public class ExamController {
         return new ResponseEntity<>(httpRes, HttpStatus.OK);
     }
 
-    @Operation(summary = "for ExamView; get prefill (update) data for form", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "for ExamView; get prefill (update) data for form")
     @GetMapping("/answer/data")
     public ResponseEntity<HttpResponseDto<?>> getExamData(@RequestParam String examId, @RequestParam String studentId, @Parameter(description = "IANA format") @RequestParam String timezone) {
         var result = service.fetchExamWithQnA(examId, studentId, timezone);

@@ -14,7 +14,7 @@ import porto.exam.dtos.AuthDto;
 import porto.exam.dtos.RegisterDto;
 import porto.exam.entities.User;
 import porto.exam.enums.Role;
-import porto.exam.exceptions.UnauthorizedException;
+import porto.exam.exceptions.BadLogicException;
 import porto.exam.repositories.UserRepository;
 import porto.exam.services.JwtService;
 import porto.exam.services.UserService;
@@ -47,7 +47,7 @@ public class UserServiceImpl implements UserService {
                     new UsernamePasswordAuthenticationToken(dto.getEmail(), dto.getPassword())
             );
         } catch (BadCredentialsException ex) {
-            throw new UnauthorizedException("Invalid credential");
+            throw new BadLogicException("Invalid credentials");
         }
 
         if (auth == null) throw new RuntimeException("Unable to authenticate into Spring Security");

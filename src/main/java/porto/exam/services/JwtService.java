@@ -32,7 +32,7 @@ public class JwtService {
     public String generateToken(UserDetails user) {
         var auth = SecurityContextHolder.getContext().getAuthentication();
         var principal = (UserDetails) auth.getPrincipal();
-        var id = repo.findByEmail(principal.getUsername()).orElseThrow().getUserId();
+        var entity = repo.findByEmail(principal.getUsername()).orElseThrow();
 
         return Jwts.builder()
                 .subject(user.getUsername())
@@ -42,7 +42,8 @@ public class JwtService {
                         .map(GrantedAuthority::getAuthority)
                         .findFirst()
                         .orElse("STUDENT"))
-                .claim("id", id)
+                .claim("id", entity.getUserId())
+                .claim("name", entity.getName())
                 .signWith(key())
                 .compact();
     }
