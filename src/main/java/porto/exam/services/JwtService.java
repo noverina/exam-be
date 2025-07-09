@@ -6,21 +6,26 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 import porto.exam.repositories.UserRepository;
 
 import javax.crypto.SecretKey;
+import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 
 @Service
 public class JwtService {
     @Value("${jwt.secret}")
     private String secretKey;
-    @Value("${jwt.expiration}")
-    private long expiration;
+    @Value("${jwt.refresh.expiration}")
+    private long accessExpiration;
+    @Value("${jwt.access.expiration}")
+    private long refreshExpiration;
     @Autowired
     private UserRepository repo;
 
@@ -29,23 +34,30 @@ public class JwtService {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateToken(UserDetails user) {
-        var auth = SecurityContextHolder.getContext().getAuthentication();
-        var principal = (UserDetails) auth.getPrincipal();
-        var entity = repo.findByEmail(principal.getUsername()).orElseThrow();
-
+    public String generateToken(String email, String type) {
+        var entity = repo.findByEmail(email).orElseThrow();
+        var expiration = type.equals("refresh") ? refreshExpiration : accessExpiration;
+        var expirationUnix = Instant.now().getEpochSecond() + expiration;
         return Jwts.builder()
-                .subject(user.getUsername())
+                .subject(email)
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + expiration))
-                .claim("role", user.getAuthorities().stream()
-                        .map(GrantedAuthority::getAuthority)
-                        .findFirst()
-                        .orElse("STUDENT"))
-                .claim("id", entity.getUserId())
-                .claim("name", entity.getName())
+                .expiration(Date.from(Instant.ofEpochSecond(expirationUnix)))
+                .claim("role", List.of("ROLE_" + entity.getRole()))
                 .signWith(key())
                 .compact();
+    }
+
+    public Authentication getAuthentication(String token) {
+        var claims = validateAndGetClaims(token);
+
+        @SuppressWarnings("unchecked")
+        List<String> roles = (List<String>) claims.get("role");
+        var authorities = roles.stream()
+                .map(SimpleGrantedAuthority::new)
+                .toList();
+
+        var principal = new User(claims.getSubject(), "", authorities);
+        return new UsernamePasswordAuthenticationToken(principal, token, authorities);
     }
 
     public Claims validateAndGetClaims(String token) {

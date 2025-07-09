@@ -10,7 +10,9 @@ import porto.exam.services.CourseService;
 
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -19,11 +21,16 @@ public class CourseServiceImpl implements CourseService {
     private CourseRepository courseRepository;
 
     @Override
-    public List<CourseListDto> fetchByStudent(String studentId, String timezone)  {
+    public List<CourseListDto> fetchByUser(String userId, String role, String timezone) {
         var zone = ZoneId.of(timezone);
         var output = new ArrayList<CourseListDto>();
-        var groupedExams = courseRepository.fetchCoursesWithExams(studentId)
+
+        Map<String, List<FlatCourseListDto>> groupedExams = new HashMap<>();
+        if (role.equals("STUDENT")) groupedExams = courseRepository.fetchCoursesWithExams(userId)
                 .stream().collect(Collectors.groupingBy(FlatCourseListDto::getCourseTeacherId));
+        if (role.equals("TEACHER")) groupedExams = courseRepository.fetchTeacherCoursesWithExams(userId)
+                .stream().collect(Collectors.groupingBy(FlatCourseListDto::getCourseTeacherId));
+
         for (var groupedExam : groupedExams.entrySet()) {
             var courseTeacherId = groupedExam.getKey();
             var courseName = groupedExam.getValue().getFirst().getCourseName();

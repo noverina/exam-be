@@ -17,8 +17,8 @@ public class CourseController {
 
     @Operation(summary = "for HomeView; fetch course and its corresponding exam")
     @GetMapping
-    public ResponseEntity<HttpResponseDto<?>> fetchByStudent(@RequestParam String studentId, @Parameter(description = "IANA format") @RequestParam String timezone) {
-        var result = service.fetchByStudent(studentId, timezone);
+    public ResponseEntity<HttpResponseDto<?>> fetchByUser(@RequestParam String userId, @RequestParam String role, @Parameter(description = "IANA format") @RequestParam String timezone) {
+        var result = service.fetchByUser(userId, role, timezone);
         var httpRes = new HttpResponseDto<>(false, "", result);
         return new ResponseEntity<>(httpRes, HttpStatus.OK);
     }

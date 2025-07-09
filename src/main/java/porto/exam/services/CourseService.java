@@ -6,5 +6,5 @@ import java.util.List;
 
 
 public interface CourseService {
-    List<CourseListDto> fetchByStudent(String studentId, String timezone);
+    List<CourseListDto> fetchByUser(String userId, String role, String timezone);
 }

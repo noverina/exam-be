@@ -24,4 +24,16 @@ public class FlatCourseListDto {
     private ZonedDateTime submitDate;
     private Integer grade;
     private Boolean isGraded;
+
+    public FlatCourseListDto(String courseTeacherId, String courseName, String teacherName, String examId, ExamType type, Integer passingGrade, ZonedDateTime startDate, ZonedDateTime endDate, Boolean isGraded) {
+        this.courseTeacherId = courseTeacherId;
+        this.courseName = courseName;
+        this.teacherName = teacherName;
+        this.examId = examId;
+        this.type = type;
+        this.passingGrade = passingGrade;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.isGraded = isGraded;
+    }
 }
