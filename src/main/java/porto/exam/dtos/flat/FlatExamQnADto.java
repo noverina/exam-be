@@ -22,6 +22,7 @@ public class FlatExamQnADto {
     private ZonedDateTime endDate;
     private ZonedDateTime submitDate;
     private ExamType examType;
+    private Boolean isGraded;
     private String courseName;
     private Integer grade;
 }

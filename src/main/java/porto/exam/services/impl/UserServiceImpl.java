@@ -2,7 +2,6 @@ package porto.exam.services.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -12,7 +11,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import porto.exam.dtos.AuthDto;
 import porto.exam.dtos.RegisterDto;
 import porto.exam.dtos.TokenDto;
@@ -38,7 +36,7 @@ public class UserServiceImpl implements UserService {
     private JwtService jwtService;
     @Autowired
     private AuthenticationManager authManager;
-    @Value("${jwt.access.expiration}")
+    @Value("${jwt.refresh.expiration}")
     private long refreshExpiration;
     private final PasswordEncoder encoder = new BCryptPasswordEncoder();
 
@@ -69,7 +67,8 @@ public class UserServiceImpl implements UserService {
         var access = jwtService.generateToken(dto.getEmail(), "access");
         var refresh = jwtService.generateToken(dto.getEmail(), "refresh");
         var user = repo.findByEmail(((UserDetails) auth.getPrincipal()).getUsername()).orElseThrow();
-        var entity = new Token();
+        var existing = tokenRepo.findByToken(refresh);
+        var entity = existing.orElseGet(Token::new);
         entity.setUser(user);
         entity.setToken(refresh);
         var expirationUnix = Instant.now().getEpochSecond() + refreshExpiration;
@@ -81,9 +80,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public String refresh(String token) {
-        var entity = tokenRepo.findByTokenAndExpiresInAfter(token, Instant.now().getEpochSecond())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-
+        var entity = tokenRepo.findByToken(token).orElseThrow();
+        var now = Instant.now().getEpochSecond();
+        if (now > entity.getExpiresIn()) throw new BadCredentialsException("Expired token");
         return jwtService.generateToken(entity.getUser().getEmail(), "refresh");
     }
 

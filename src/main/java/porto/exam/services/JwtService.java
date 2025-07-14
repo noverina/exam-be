@@ -22,9 +22,9 @@ import java.util.List;
 public class JwtService {
     @Value("${jwt.secret}")
     private String secretKey;
-    @Value("${jwt.refresh.expiration}")
-    private long accessExpiration;
     @Value("${jwt.access.expiration}")
+    private long accessExpiration;
+    @Value("${jwt.refresh.expiration}")
     private long refreshExpiration;
     @Autowired
     private UserRepository repo;

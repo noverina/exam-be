@@ -27,7 +27,7 @@ public class Exam {
     private ZonedDateTime startDate;
     @Convert(converter = ZonedDateTimeConverter.class)
     private ZonedDateTime endDate;
-    private boolean isGraded;
+    private Boolean isGraded;
 
     @ManyToOne
     @JoinColumn(name = "course_teacher_id")

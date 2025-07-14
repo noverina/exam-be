@@ -23,6 +23,8 @@ public class UserController {
     private UserService service;
     @Value("${jwt.refresh.expiration}")
     private long expiration;
+    @Value("${secure.cookie}")
+    private boolean secureCookie;
 
     @PostMapping("/register")
     public ResponseEntity<HttpResponseDto<?>> register(@RequestBody RegisterDto dto) {
@@ -34,10 +36,22 @@ public class UserController {
     @PostMapping
     public ResponseEntity<HttpResponseDto<String>> auth(@RequestBody AuthDto dto, HttpServletResponse res) {
         var token = service.auth(dto);
-        var cookie = ResponseCookie.from("token", token.getRefresh())
+        var cookie = ResponseCookie
+                .from("token", "")
+                .path("/")
+                .maxAge(-1)
+                .build();
+        if (secureCookie) cookie = ResponseCookie.from("token", token.getRefresh())
                 .httpOnly(true)
-                //.secure(true)
-                .path("/auth")
+                .secure(false)
+                .path("/")
+                .maxAge(expiration)
+                .sameSite("Lax")
+                .build();
+        else ResponseCookie.from("token", token.getRefresh())
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
                 .maxAge(expiration)
                 .sameSite("Lax")
                 .build();
@@ -65,11 +79,11 @@ public class UserController {
 
     @GetMapping("/invalidate")
     public ResponseEntity<Void> logout(@CookieValue(name = "token", required = false) String token, HttpServletResponse res) {
-        if (token == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        //if (token == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         service.invalidate(token);
         var cleared = ResponseCookie.from("token", "")
                 .httpOnly(true)
-                .path("/auth")
+                .path("/")
                 .maxAge(0)
                 .build();
         res.addHeader(HttpHeaders.SET_COOKIE, cleared.toString());

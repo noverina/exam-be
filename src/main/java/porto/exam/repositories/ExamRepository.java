@@ -24,7 +24,7 @@ public interface ExamRepository extends JpaRepository<Exam, String> {
     public List<FlatUpsertPrefillDto> fetchUpsertPrefill(@Param("examId") String examId);
 
     @Query(value = """
-            SELECT new porto.exam.dtos.flat.FlatExamQnADto(a.answerId, a.text, a.isCorrect, q.questionId, q.text, e.examId, e.endDate, se.submitDate, e.type, c.name, se.grade)
+            SELECT new porto.exam.dtos.flat.FlatExamQnADto(a.answerId, a.text, a.isCorrect, q.questionId, q.text, e.examId, e.endDate, se.submitDate, e.type, e.isGraded, c.name, se.grade)
             FROM StudentAnswer sa
             RIGHT JOIN sa.answer a
             JOIN a.question q
@@ -38,14 +38,14 @@ public interface ExamRepository extends JpaRepository<Exam, String> {
     public List<FlatExamQnADto> fetchExamWithQnA(@Param("examId") String examId, @Param("studentId") String studentId);
 
     @Query("""
-        SELECT new porto.exam.dtos.flat.FlatGradeDto(s.userId, s.name, ex.examId, ex.type, c.name, se.grade, ex.passingGrade)
-        FROM Enrollment e
-        JOIN e.student s
-        JOIN e.courseTeacher ct
-        JOIN ct.course c
-        JOIN Exam ex ON ex.courseTeacher = ct
-        LEFT JOIN StudentExam se ON se.exam = ex AND se.student = s
-        WHERE ex.examId = :examId and ct.courseTeacherId = :courseTeacherId
-        """)
+            SELECT new porto.exam.dtos.flat.FlatGradeDto(s.userId, s.name, ex.examId, ex.type, c.name, se.grade, ex.passingGrade)
+            FROM Enrollment e
+            JOIN e.student s
+            JOIN e.courseTeacher ct
+            JOIN ct.course c
+            JOIN Exam ex ON ex.courseTeacher = ct
+            LEFT JOIN StudentExam se ON se.exam = ex AND se.student = s
+            WHERE ex.examId = :examId and ct.courseTeacherId = :courseTeacherId
+            """)
     public List<FlatGradeDto> fetchGrade(@Param("examId") String examId, @Param("courseTeacherId") String courseTeacherId);
 }
