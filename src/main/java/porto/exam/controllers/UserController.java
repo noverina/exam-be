@@ -48,7 +48,7 @@ public class UserController {
                 .maxAge(expiration)
                 .sameSite("Lax")
                 .build();
-        else ResponseCookie.from("token", token.getRefresh())
+        else cookie = ResponseCookie.from("token", token.getRefresh())
                 .httpOnly(true)
                 .secure(true)
                 .path("/")
