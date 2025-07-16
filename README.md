@@ -3,8 +3,8 @@
 - Please contact me if you need specific user credential
 - Ready-to-use database with sample data is included in this project in the file called database.db
 - The database in production will be regularly wiped and restored with this sample database.db (obviously, the password
-  is different though)
-- Swagger is in `http://localhost:8085/swagger-ui/index.html#/`
+  will be different)
+- Swagger is in `(domain)/swagger-ui/index.html#/`
 
 # application.properties
 

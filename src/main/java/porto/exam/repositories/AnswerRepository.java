@@ -22,7 +22,7 @@ public interface AnswerRepository extends JpaRepository<Answer, String> {
             SELECT a
             FROM Answer a
             JOIN FETCH a.question q
-            WHERE q.exam.examId = :examId
+            WHERE q.exam.examId = :examId AND a.isCorrect = true
             """)
     public List<Answer> findExamCorrectAnswers(@Param("examId") String examId);
 }

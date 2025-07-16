@@ -11,11 +11,15 @@ import porto.exam.enums.ExamType;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class ExamListDto {
     @JsonProperty("isFinal")
     private boolean isFinal;
+    @JsonProperty("isGraded")
+    private boolean isGraded;
     private String examId;
     private ExamType examType;
     private String courseName;

@@ -25,15 +25,15 @@ public interface ExamRepository extends JpaRepository<Exam, String> {
 
     @Query(value = """
             SELECT new porto.exam.dtos.flat.FlatExamQnADto(a.answerId, a.text, a.isCorrect, q.questionId, q.text, e.examId, e.endDate, se.submitDate, e.type, e.isGraded, c.name, se.grade)
-            FROM StudentAnswer sa
-            RIGHT JOIN sa.answer a
+            FROM Answer a
             JOIN a.question q
             JOIN q.exam e
             JOIN e.courseTeacher ct
             JOIN ct.course c
+            LEFT JOIN StudentAnswer sa ON sa.answer = a AND sa.question = q AND sa.student.id = :studentId
             LEFT JOIN StudentExam se ON se.exam = e AND se.student.id = :studentId
-            WHERE e.examId = :examId
-            ORDER BY q.questionId, a.answerId
+            WHERE e.id = :examId
+            ORDER BY q.id, a.id
             """)
     public List<FlatExamQnADto> fetchExamWithQnA(@Param("examId") String examId, @Param("studentId") String studentId);
 

@@ -162,6 +162,7 @@ public class ExamServiceImpl implements ExamService {
             var canShowCorrect = groupedExam.getValue().getFirst().getEndDate().isBefore(ZonedDateTime.now()) && groupedExam.getValue().getFirst().getIsGraded();
             var grade = groupedExam.getValue().getFirst().getGrade();
             var isFinal = groupedExam.getValue().getFirst().getSubmitDate() != null || groupedExam.getValue().getFirst().getGrade() != null;
+            var isGraded = groupedExam.getValue().getFirst().getIsGraded();
 
             var groupedAnswers = groupedExam.getValue().stream().collect(Collectors.groupingBy(FlatExamQnADto::getQuestionId, LinkedHashMap::new, Collectors.toList()));
             var questions = new ArrayList<QuestionDto>();
@@ -179,7 +180,7 @@ public class ExamServiceImpl implements ExamService {
                 questions.add(new QuestionDto(questionId, canShowCorrect ? correct : null, selected, text, answers));
             }
 
-            output = new ExamListDto(isFinal, examId, examType, courseName, endDate, grade, questions);
+            output = new ExamListDto(isFinal, isGraded, examId, examType, courseName, endDate, grade, questions);
         }
         return output;
     }
