@@ -11,6 +11,9 @@ RUN ./mvnw clean package -DskipTests
 # 2. Runtime stage
 FROM eclipse-temurin:21-jre AS runtime
 WORKDIR /app
+# Copy DB
+COPY app.db app.db
+# Copy JAR
 COPY --from=builder /app/target/*.jar app.jar
 
 # 3. Declare build-time args (to read Railway vars during build if needed)
