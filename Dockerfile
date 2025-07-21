@@ -3,7 +3,8 @@ FROM maven:3.9.8-eclipse-temurin-21 AS builder
 WORKDIR /app
 
 COPY pom.xml src/ ./
-RUN mvn clean package -DskipTests
+RUN set -eux; \
+    mvn clean package -DskipTests -V -e > build.log || (cat build.log && false)
 
 # 2. Runtime stage
 FROM eclipse-temurin:21-jre AS runtime
