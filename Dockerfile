@@ -12,7 +12,7 @@ RUN ./mvnw clean package -DskipTests
 FROM eclipse-temurin:21-jre AS runtime
 WORKDIR /app
 # Copy DB
-COPY app.db app.db
+COPY db.db db.db
 # Copy JAR
 COPY --from=builder /app/target/*.jar app.jar
 
