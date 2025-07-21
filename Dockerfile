@@ -13,36 +13,36 @@ WORKDIR /app
 COPY --from=builder /app/target/*.jar app.jar
 
 # 3. Declare build-time args (to read Railway vars during build if needed)
-ARG spring.application.name
-ARG spring.mvc.dispatch-options-request
-ARG secure.cookie
+ARG spring_application_name
+ARG spring_mvc.dispatch-options-request
+ARG secure_cookie
 ARG frontend-address
-ARG springdoc.swagger-ui.authorization-bearer-format
-ARG springdoc.swagger-ui.request-redirect-enabled
-ARG springdoc.swagger-ui.persist-authorize
-ARG spring.datasource.url
-ARG spring.datasource.driver-class-name
-ARG spring.datasource.hikari.connection-test-query
-ARG spring.jpa.properties.hibernate.dialect
-ARG jwt.secret
-ARG jwt.access.expiration
-ARG jwt.access.expiration
+ARG springdoc_swagger-ui_authorization-bearer-format
+ARG springdoc_swagger-ui_request-redirect-enabled
+ARG springdoc_swagger-ui_persist-authorize
+ARG spring_datasource-url
+ARG spring_datasource-driver-class-name
+ARG spring_datasource-hikari_connection-test-query
+ARG spring-jpa-properties-hibernate-dialect
+ARG jwt-secret
+ARG jwt-access-expiration
+ARG jwt-access-expiration
 
 # 4. Pass them into runtime
-ENV spring.application.name=$spring.application.name \
-    spring.mvc.dispatch-options-request=$spring.mvc.dispatch-options-request \
-    secure.cookie=$secure.cookie \
+ENV spring.application.name=$spring_application_name \
+    spring.mvc.dispatch-options-request=$spring-mvc-dispatch-options-request \
+    secure.cookie=$secure-cookie \
     frontend-address=$frontend-address \
-    springdoc.swagger-ui.authorization-bearer-format \
-    springdoc.swagger-ui.request-redirect-enabled=$springdoc.swagger-ui.request-redirect-enabled \
-    springdoc.swagger-ui.persist-authorize=$springdoc.swagger-ui.persist-authorize \
-    spring.datasource.url=$spring.datasource.url \
-    spring.datasource.driver-class-name=$spring.datasource.driver-class-name \
-    spring.datasource.hikari.connection-test-query=$spring.datasource.hikari.connection-test-query \
-    spring.jpa.properties.hibernate.dialect=$spring.jpa.properties.hibernate.dialect \
-    jwt.secret=$jwt.secret \
-    jwt.access.expiration=$jwt.access.expiration \
-    jwt.refresh.expiration=$jwt.refresh.expiration \
+    springdoc.swagger-ui.authorization-bearer-format=$springdoc-swagger-ui-authorization-bearer-format \
+    springdoc.swagger-ui.request-redirect-enabled=$springdoc-swagger-ui-request-redirect-enabled \
+    springdoc.swagger-ui.persist-authorize=$springdoc-swagger-ui-persist-authorize \
+    spring.datasource.url=$spring-datasource-url \
+    spring.datasource.driver-class-name=$spring-datasource-driver-class-name \
+    spring.datasource.hikari.connection-test-query=$spring-datasource-hikari-connection-test-query \
+    spring.jpa.properties.hibernate.dialect=$spring-jpa-properties-hibernate-dialect \
+    jwt.secret=$jwt-secret \
+    jwt.access.expiration=$jwt-access-expiration \
+    jwt.refresh.expiration=$jwt-refresh-expiration \
 
 # 5. Specify port
 ENV PORT=8080
