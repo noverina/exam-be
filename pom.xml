@@ -31,7 +31,8 @@
         <maven.compiler.release>21</maven.compiler.release>
         <spring.boot.version>3.5.0</spring.boot.version>
         <spring.security.version>6.5.1</spring.security.version>
-        <maven.compiler.proc>full</maven.compiler.proc>
+        <!--        <maven.compiler.proc>full</maven.compiler.proc>-->
+        <lombok.version>1.18.36</lombok.version>
     </properties>
 
     <dependencies>
@@ -79,7 +80,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.36</version>
+            <version>${lombok.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -116,11 +117,14 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
                 <configuration>
+                    <release>${java.version}</release>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
-                            <version>1.18.36</version>
+                            <version>${lombok.version}</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
