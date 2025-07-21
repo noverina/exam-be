@@ -8,7 +8,7 @@ COPY src/ src/
 RUN ./mvnw clean package -DskipTests
 
 # 2. Runtime stage
-FROM eclipse-temurin:21-jdk-slim
+FROM eclipse-temurin:21-jre AS runtime
 WORKDIR /app
 COPY --from=builder /app/target/*.jar app.jar
 
