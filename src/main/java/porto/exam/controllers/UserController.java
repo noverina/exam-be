@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import porto.exam.dtos.AuthDto;
 import porto.exam.dtos.HttpResponseDto;
-import porto.exam.dtos.RegisterDto;
 import porto.exam.dtos.UserDto;
 import porto.exam.services.UserService;
 
@@ -26,12 +25,12 @@ public class UserController {
     @Value("${secure.cookie}")
     private boolean secureCookie;
 
-    @PostMapping("/register")
-    public ResponseEntity<HttpResponseDto<?>> register(@RequestBody RegisterDto dto) {
-        service.register(dto);
-        var httpRes = new HttpResponseDto<>(false, "", null);
-        return new ResponseEntity<>(httpRes, HttpStatus.OK);
-    }
+//    @PostMapping("/register")
+//    public ResponseEntity<HttpResponseDto<?>> register(@RequestBody RegisterDto dto) {
+//        service.register(dto);
+//        var httpRes = new HttpResponseDto<>(false, "", null);
+//        return new ResponseEntity<>(httpRes, HttpStatus.OK);
+//    }
 
     @PostMapping
     public ResponseEntity<HttpResponseDto<String>> auth(@RequestBody AuthDto dto, HttpServletResponse res) {
