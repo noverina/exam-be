@@ -8,11 +8,14 @@ import porto.exam.dtos.detail.CourseListDetailDto;
 
 import java.util.List;
 
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class CourseListDto {
     private String courseTeacherId;
     private String courseName;
     private String teacherName;
     private List<CourseListDetailDto> exams;
 }
+
