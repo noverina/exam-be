@@ -21,6 +21,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import porto.exam.configs.JwtFilter;
 
 import java.util.List;
 
@@ -76,6 +77,8 @@ public class SecurityConfig {
                         .requestMatchers("/exam/grade/**", "/exam", "/exam/data").hasRole("TEACHER")
                         .anyRequest().authenticated()
                 )
+                .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((req, res, authEx) ->
                                 res.setStatus(HttpServletResponse.SC_UNAUTHORIZED))
