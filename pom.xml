@@ -33,6 +33,7 @@
         <spring.security.version>6.5.1</spring.security.version>
         <!--        <maven.compiler.proc>full</maven.compiler.proc>-->
         <lombok.version>1.18.36</lombok.version>
+        <start-class>porto.exam.ExamApplication</start-class>
     </properties>
 
     <dependencies>
@@ -113,11 +114,6 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
-
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
@@ -141,9 +137,13 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>${spring.boot.version}</version>
-                <configuration>
-                    <mainClass>porto.exam.ExamApplication</mainClass>
-                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
